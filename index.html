@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text to Image & Speech Converter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .result-image {
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        
+        .result-image:hover {
+            transform: scale(1.02);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+        }
+        
+        .voice-selector {
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 0.5rem center;
+            background-size: 1em;
+        }
+        
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.7);
+            }
+            70% {
+                transform: scale(1.05);
+                box-shadow: 0 0 0 10px rgba(79, 70, 229, 0);
+            }
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(79, 70, 229, 0);
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-2">Text to Image & Speech</h1>
+            <p class="text-lg text-gray-600 max-w-2xl mx-auto">Transform your text into stunning AI-generated images and listen to it with natural sounding voices</p>
+        </header>
+        
+        <!-- Main Content -->
+        <div class="flex flex-col lg:flex-row gap-8">
+            <!-- Input Section -->
+            <div class="w-full lg:w-1/2 bg-white rounded-xl shadow-lg p-6">
+                <div class="mb-6">
+                    <label for="text-input" class="block text-sm font-medium text-gray-700 mb-2">Enter your text</label>
+                    <textarea 
+                        id="text-input" 
+                        rows="6" 
+                        class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
+                        placeholder="Describe the image you want to generate..."></textarea>
+                </div>
+                
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Image Style</label>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        <button data-style="realistic" class="style-btn px-4 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 transition active:bg-gray-100">Realistic</button>
+                        <button data-style="cartoon" class="style-btn px-4 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 transition active:bg-gray-100">Cartoon</button>
+                        <button data-style="3d-render" class="style-btn px-4 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 transition active:bg-gray-100">3D Render</button>
+                        <button data-style="watercolor" class="style-btn px-4 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 transition active:bg-gray-100">Watercolor</button>
+                        <button data-style="cyberpunk" class="style-btn px-4 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 transition active:bg-gray-100">Cyberpunk</button>
+                        <button data-style="minimalist" class="style-btn px-4 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 transition active:bg-gray-100">Minimalist</button>
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <label for="voice-select" class="block text-sm font-medium text-gray-700 mb-2">Voice</label>
+                    <select id="voice-select" class="voice-selector w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200">
+                        <option value="">Loading voices...</option>
+                    </select>
+                </div>
+                
+                <div class="flex flex-wrap gap-3">
+                    <button id="generate-btn" class="flex-1 gradient-bg text-white px-6 py-3 rounded-lg font-medium hover:opacity-90 transition flex items-center justify-center gap-2">
+                        <i class="fas fa-image"></i> Generate Image
+                    </button>
+                    <button id="speak-btn" class="flex-1 bg-indigo-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-indigo-700 transition flex items-center justify-center gap-2">
+                        <i class="fas fa-volume-up"></i> Speak Text
+                    </button>
+                    <button id="download-btn" class="flex-1 bg-gray-800 text-white px-6 py-3 rounded-lg font-medium hover:bg-gray-700 transition flex items-center justify-center gap-2">
+                        <i class="fas fa-download"></i> Download
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Output Section -->
+            <div class="w-full lg:w-1/2">
+                <div class="bg-white rounded-xl shadow-lg p-6 h-full">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-semibold text-gray-800">Result</h2>
+                        <div id="loading-indicator" class="hidden items-center gap-2 text-indigo-600">
+                            <div class="w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                            <span>Generating...</span>
+                        </div>
+                    </div>
+                    
+                    <div id="result-container" class="flex flex-col items-center justify-center h-96 bg-gray-50 rounded-lg overflow-hidden relative">
+                        <div id="placeholder" class="text-center p-6">
+                            <div class="mx-auto w-24 h-24 bg-indigo-100 rounded-full flex items-center justify-center mb-4 pulse-animation">
+                                <i class="fas fa-magic text-indigo-600 text-4xl"></i>
+                            </div>
+                            <h3 class="text-xl font-medium text-gray-700 mb-2">Your AI-generated image will appear here</h3>
+                            <p class="text-gray-500">Enter some text and click "Generate Image" to get started</p>
+                        </div>
+                        <img id="result-image" class="hidden w-full h-full object-contain" alt="Generated image">
+                    </div>
+                    
+                    <div id="error-message" class="hidden mt-4 p-4 bg-red-50 text-red-700 rounded-lg"></div>
+                    
+                    <div class="mt-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">History</label>
+                        <div id="history-container" class="grid grid-cols-3 gap-2">
+                            <!-- History items will be added here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <footer class="mt-16 text-center text-gray-500 text-sm">
+            <p>Created with ❤️ using AI magic | Note: This demo uses a simulated API for demonstration purposes</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // DOM Elements
+            const textInput = document.getElementById('text-input');
+            const generateBtn = document.getElementById('generate-btn');
+            const speakBtn = document.getElementById('speak-btn');
+            const downloadBtn = document.getElementById('download-btn');
+            const voiceSelect = document.getElementById('voice-select');
+            const resultImage = document.getElementById('result-image');
+            const placeholder = document.getElementById('placeholder');
+            const resultContainer = document.getElementById('result-container');
+            const loadingIndicator = document.getElementById('loading-indicator');
+            const errorMessage = document.getElementById('error-message');
+            const historyContainer = document.getElementById('history-container');
+            const styleButtons = document.querySelectorAll('.style-btn');
+            
+            // Variables
+            let voices = [];
+            let selectedStyle = 'realistic';
+            let currentImageUrl = '';
+            
+            // Initialize speech synthesis
+            function loadVoices() {
+                // This is needed for Chrome to load voices properly
+                const synth = window.speechSynthesis;
+                synth.onvoiceschanged = () => {
+                    voices = synth.getVoices();
+                    populateVoiceList();
+                };
+                
+                // Try to get voices immediately
+                voices = synth.getVoices();
+                if (voices.length > 0) {
+                    populateVoiceList();
+                }
+            }
+            
+            function populateVoiceList() {
+                voiceSelect.innerHTML = '';
+                
+                // Filter for English voices
+                const englishVoices = voices.filter(voice => voice.lang.includes('en'));
+                
+                if (englishVoices.length === 0) {
+                    voiceSelect.innerHTML = '<option value="">No English voices available</option>';
+                    return;
+                }
+                
+                englishVoices.forEach(voice => {
+                    const option = document.createElement('option');
+                    option.textContent = `${voice.name} (${voice.lang})`;
+                    option.setAttribute('data-name', voice.name);
+                    option.setAttribute('data-lang', voice.lang);
+                    voiceSelect.appendChild(option);
+                });
+                
+                // Set default voice (Google US English if available)
+                const defaultVoice = englishVoices.find(voice => 
+                    voice.name.includes('Google US English') || 
+                    voice.name.includes('Microsoft David Desktop')
+                );
+                
+                if (defaultVoice) {
+                    voiceSelect.selectedIndex = [...voiceSelect.options].findIndex(
+                        option => option.getAttribute('data-name') === defaultVoice.name
+                    );
+                }
+            }
+            
+            // Style selection
+            styleButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    styleButtons.forEach(btn => btn.classList.remove('bg-indigo-100', 'border-indigo-500', 'text-indigo-700'));
+                    button.classList.add('bg-indigo-100', 'border-indigo-500', 'text-indigo-700');
+                    selectedStyle = button.getAttribute('data-style');
+                });
+            });
+            
+            // Generate image (simulated API call)
+            generateBtn.addEventListener('click', async () => {
+                const text = textInput.value.trim();
+                
+                if (!text) {
+                    showError('Please enter some text to generate an image');
+                    return;
+                }
+                
+                // Show loading state
+                loadingIndicator.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+                resultImage.classList.add('hidden');
+                errorMessage.classList.add('hidden');
+                
+                try {
+                    // In a real app, you would call the DALL-E API here
+                    // This is a simulation that returns a placeholder image
+                    currentImageUrl = await simulateDalleApiCall(text, selectedStyle);
+                    
+                    // Display the result
+                    resultImage.src = currentImageUrl;
+                    resultImage.classList.remove('hidden');
+                    
+                    // Add to history
+                    addToHistory(text, currentImageUrl);
+                } catch (err) {
+                    showError('Failed to generate image. Please try again.');
+                    console.error(err);
+                } finally {
+                    loadingIndicator.classList.add('hidden');
+                }
+            });
+            
+            // Simulate API call with delay
+            function simulateDalleApiCall(text, style) {
+                return new Promise((resolve) => {
+                    // Simulate API delay
+                    setTimeout(() => {
+                        // This is just a placeholder - in a real app you would call the actual API
+                        const styleMap = {
+                            'realistic': 'photo',
+                            'cartoon': 'cartoon',
+                            '3d-render': '3d',
+                            'watercolor': 'watercolor',
+                            'cyberpunk': 'cyberpunk',
+                            'minimalist': 'minimal'
+                        };
+                        
+                        // Using placeholder images from placeholder services
+                        const baseUrl = 'https://source.unsplash.com/random/600x600/?';
+                        const query = encodeURIComponent(`${styleMap[style]}+${text}`);
+                        resolve(`${baseUrl}${query}`);
+                    }, 1500);
+                });
+            }
+            
+            // Speak text
+            speakBtn.addEventListener('click', () => {
+                const text = textInput.value.trim();
+                
+                if (!text) {
+                    showError('Please enter some text to speak');
+                    return;
+                }
+                
+                if (voices.length === 0) {
+                    showError('No voices available in your browser');
+                    return;
+                }
+                
+                const selectedOption = voiceSelect.selectedOptions[0];
+                if (!selectedOption) {
+                    showError('Please select a voice');
+                    return;
+                }
+                
+                const voiceName = selectedOption.getAttribute('data-name');
+                const voice = voices.find(v => v.name === voiceName);
+                
+                if (!voice) {
+                    showError('Selected voice not found');
+                    return;
+                }
+                
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.voice = voice;
+                utterance.rate = 0.9;
+                utterance.pitch = 1;
+                
+                window.speechSynthesis.speak(utterance);
+            });
+            
+            // Download image
+            downloadBtn.addEventListener('click', () => {
+                if (!currentImageUrl) {
+                    showError('No image to download');
+                    return;
+                }
+                
+                const link = document.createElement('a');
+                link.href = currentImageUrl;
+                link.download = `ai-image-${Date.now()}.jpg`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            });
+            
+            // Add to history
+            function addToHistory(text, imageUrl) {
+                if (text.length > 30) {
+                    text = text.substring(0, 30) + '...';
+                }
+                
+                const historyItem = document.createElement('div');
+                historyItem.className = 'cursor-pointer group';
+                historyItem.innerHTML = `
+                    <div class="aspect-square bg-gray-100 rounded-lg overflow-hidden relative">
+                        <img src="${imageUrl}" alt="${text}" class="w-full h-full object-cover group-hover:opacity-90 transition">
+                        <div class="absolute inset-0 bg-black bg-opacity-30 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                            <button class="history-view-btn bg-white bg-opacity-80 rounded-full w-10 h-10 flex items-center justify-center text-indigo-600">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <p class="text-xs mt-1 text-gray-600 truncate">${text}</p>
+                `;
+                
+                // Prepend to keep newest first
+                historyContainer.insertBefore(historyItem, historyContainer.firstChild);
+                
+                // Limit history to 6 items
+                if (historyContainer.children.length > 6) {
+                    historyContainer.removeChild(historyContainer.lastChild);
+                }
+                
+                // Add click handler to view history items
+                const viewBtn = historyItem.querySelector('.history-view-btn');
+                viewBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    resultImage.src = imageUrl;
+                    resultImage.classList.remove('hidden');
+                    placeholder.classList.add('hidden');
+                    currentImageUrl = imageUrl;
+                });
+            }
+            
+            // Show error message
+            function showError(message) {
+                errorMessage.textContent = message;
+                errorMessage.classList.remove('hidden');
+                
+                // Hide after 5 seconds
+                setTimeout(() => {
+                    errorMessage.classList.add('hidden');
+                }, 5000);
+            }
+            
+            // Initialize
+            loadVoices();
+            
+            // If voices didn't load, try again after a delay
+            if (voices.length === 0) {
+                setTimeout(loadVoices, 1000);
+            }
+        });
+    </script>
+</body>
+</html>
